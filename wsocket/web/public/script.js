@@ -14,17 +14,14 @@ class TicTacToeGame {
 	}
 
 	initializeElements() {
-		// Screens
 		this.nameScreen = document.getElementById('nameScreen')
 		this.waitingScreen = document.getElementById('waitingScreen')
 		this.gameScreen = document.getElementById('gameScreen')
 		this.disconnectScreen = document.getElementById('disconnectScreen')
 
-		// Input elements
 		this.playerNameInput = document.getElementById('playerName')
 		this.searchBtn = document.getElementById('searchBtn')
 
-		// Game elements
 		this.currentPlayerEl = document.getElementById('currentPlayer')
 		this.opponentEl = document.getElementById('opponent')
 		this.playerSymbolEl = document.getElementById('playerSymbol')
@@ -32,33 +29,27 @@ class TicTacToeGame {
 		this.gameBoard = document.getElementById('gameBoard')
 		this.restartBtn = document.getElementById('restartBtn')
 
-		// Modal elements
 		this.gameOverModal = document.getElementById('gameOverModal')
 		this.gameResultEl = document.getElementById('gameResult')
 		this.playAgainBtn = document.getElementById('playAgainBtn')
 		this.backToMenuBtn = document.getElementById('backToMenuBtn')
 		this.backToMenuModalBtn = document.getElementById('backToMenuModalBtn')
 
-		// Get all cells
 		this.cells = document.querySelectorAll('.cell')
 	}
 
 	setupEventListeners() {
-		// Name screen
 		this.searchBtn.addEventListener('click', () => this.searchForPlayer())
 		this.playerNameInput.addEventListener('keypress', e => {
 			if (e.key === 'Enter') this.searchForPlayer()
 		})
 
-		// Game board
 		this.cells.forEach(cell => {
 			cell.addEventListener('click', e => this.makeMove(e))
 		})
 
-		// Restart button
 		this.restartBtn.addEventListener('click', () => this.restartGame())
 
-		// Modal buttons
 		this.playAgainBtn.addEventListener('click', () => this.playAgain())
 		this.backToMenuBtn.addEventListener('click', () => this.backToMenu())
 		this.backToMenuModalBtn.addEventListener('click', () => this.backToMenu())
@@ -161,17 +152,14 @@ class TicTacToeGame {
 			const cellValue = this.gameState.board[index]
 			cell.textContent = cellValue || ''
 
-			// Remove old classes
 			cell.classList.remove('x', 'o', 'disabled')
 
-			// Add appropriate class
 			if (cellValue === 'X') {
 				cell.classList.add('x')
 			} else if (cellValue === 'O') {
 				cell.classList.add('o')
 			}
 
-			// Disable cells if game is finished or not player's turn
 			if (
 				this.gameState.gameStatus !== 'playing' ||
 				this.gameState.currentPlayer !== this.playerIndex ||
@@ -217,10 +205,8 @@ class TicTacToeGame {
 		this.turnStatusEl.textContent = "O'yin tugadi"
 		this.turnStatusEl.style.color = '#666'
 
-		// Show restart button
 		this.restartBtn.style.display = 'inline-block'
 
-		// Show modal after a short delay
 		setTimeout(() => {
 			this.showGameOverModal(message, messageClass)
 		}, 1000)
@@ -237,23 +223,18 @@ class TicTacToeGame {
 	}
 
 	showScreen(screenId) {
-		// Hide all screens
 		document.querySelectorAll('.screen').forEach(screen => {
 			screen.classList.remove('active')
 		})
 
-		// Show target screen
 		document.getElementById(screenId).classList.add('active')
 	}
 
 	showMessage(message, type = 'info') {
-		// Simple message display (you can enhance this with a toast system)
 		console.log(`${type.toUpperCase()}: ${message}`)
 
-		// You can implement a toast notification system here
 		const alertClass = type === 'error' ? 'alert-error' : 'alert-info'
 
-		// Create temporary message element
 		const messageEl = document.createElement('div')
 		messageEl.className = `message ${alertClass}`
 		messageEl.textContent = message
@@ -271,7 +252,6 @@ class TicTacToeGame {
 
 		document.body.appendChild(messageEl)
 
-		// Remove after 3 seconds
 		setTimeout(() => {
 			if (messageEl.parentNode) {
 				messageEl.parentNode.removeChild(messageEl)
@@ -287,16 +267,13 @@ class TicTacToeGame {
 		this.playerSymbol = ''
 		this.gameState = null
 
-		// Reset input
 		this.playerNameInput.value = ''
 
-		// Reset board
 		this.cells.forEach(cell => {
 			cell.textContent = ''
 			cell.classList.remove('x', 'o', 'disabled')
 		})
 
-		// Reset UI elements
 		this.restartBtn.style.display = 'none'
 		this.turnStatusEl.textContent = ''
 		this.currentPlayerEl.textContent = 'You : '
@@ -307,12 +284,8 @@ class TicTacToeGame {
 	}
 }
 
-// Initialize game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
 	new TicTacToeGame()
 })
 
-// Handle page refresh/close
-window.addEventListener('beforeunload', () => {
-	// Socket.io will handle the disconnect automatically
-})
+window.addEventListener('beforeunload', () => {})
