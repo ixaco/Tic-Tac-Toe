@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Real-time Tic-Tac-Toe</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+	<div class="container">
+		<h1 class="title">Tic-Tac-Toe</h1>
+
+		<!-- Ism kiritish sahifasi -->
+		<div id="nameScreen" class="screen active">
+			<div class="input-container">
+				<label for="playerName">Enter your name :</label>
+				<input type="text" id="playerName" placeholder="Name" maxlength="20">
+				<button id="searchBtn" class="btn">Search for a player</button>
+			</div>
+		</div>
+
+		<!-- Kutish sahifasi -->
+		<div id="waitingScreen" class="screen">
+			<div class="waiting-container">
+				<h2>Raqib izlanmoqda...</h2>
+				<div class="loading-spinner"></div>
+				<p>Iltimos, kuting...</p>
+			</div>
+		</div>
+
+		<!-- O'yin sahifasi -->
+		<div id="gameScreen" class="screen">
+			<div class="game-info">
+				<div class="player-info">
+					<span id="currentPlayer">You : </span>
+					<span id="opponent">Opponent : </span>
+				</div>
+				<div class="game-status">
+					<span id="playerSymbol">You are playing as X</span>
+					<span id="turnStatus">X's Turn</span>
+				</div>
+			</div>
+
+			<div class="game-board">
+				<div class="board" id="gameBoard">
+					<div class="cell" data-index="0"></div>
+					<div class="cell" data-index="1"></div>
+					<div class="cell" data-index="2"></div>
+					<div class="cell" data-index="3"></div>
+					<div class="cell" data-index="4"></div>
+					<div class="cell" data-index="5"></div>
+					<div class="cell" data-index="6"></div>
+					<div class="cell" data-index="7"></div>
+					<div class="cell" data-index="8"></div>
+				</div>
+			</div>
+
+			<div class="game-actions">
+				<button id="restartBtn" class="btn" style="display: none;">Qayta o'ynash</button>
+			</div>
+		</div>
+
+		<!-- Uzilish sahifasi -->
+		<div id="disconnectScreen" class="screen">
+			<div class="disconnect-container">
+				<h2>Raqib uzildi</h2>
+				<p>Afsuski, raqibingiz o'yinni tark etdi</p>
+				<button id="backToMenuBtn" class="btn">Bosh menuga qaytish</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Game Over Modal -->
+	<div id="gameOverModal" class="modal">
+		<div class="modal-content">
+			<h2 id="gameResult"></h2>
+			<div class="modal-actions">
+				<button id="playAgainBtn" class="btn">Qayta o'ynash</button>
+				<button id="backToMenuModalBtn" class="btn btn-secondary">Bosh menu</button>
+			</div>
+		</div>
+	</div>
+
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="script.js"></script>
+</body>
+
+</html>

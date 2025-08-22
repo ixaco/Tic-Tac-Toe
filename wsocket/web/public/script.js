@@ -1,0 +1,318 @@
+class TicTacToeGame {
+	constructor() {
+		this.socket = io()
+		this.gameId = null
+		this.playerIndex = null
+		this.playerName = ''
+		this.opponentName = ''
+		this.playerSymbol = ''
+		this.gameState = null
+
+		this.initializeElements()
+		this.setupEventListeners()
+		this.setupSocketListeners()
+	}
+
+	initializeElements() {
+		// Screens
+		this.nameScreen = document.getElementById('nameScreen')
+		this.waitingScreen = document.getElementById('waitingScreen')
+		this.gameScreen = document.getElementById('gameScreen')
+		this.disconnectScreen = document.getElementById('disconnectScreen')
+
+		// Input elements
+		this.playerNameInput = document.getElementById('playerName')
+		this.searchBtn = document.getElementById('searchBtn')
+
+		// Game elements
+		this.currentPlayerEl = document.getElementById('currentPlayer')
+		this.opponentEl = document.getElementById('opponent')
+		this.playerSymbolEl = document.getElementById('playerSymbol')
+		this.turnStatusEl = document.getElementById('turnStatus')
+		this.gameBoard = document.getElementById('gameBoard')
+		this.restartBtn = document.getElementById('restartBtn')
+
+		// Modal elements
+		this.gameOverModal = document.getElementById('gameOverModal')
+		this.gameResultEl = document.getElementById('gameResult')
+		this.playAgainBtn = document.getElementById('playAgainBtn')
+		this.backToMenuBtn = document.getElementById('backToMenuBtn')
+		this.backToMenuModalBtn = document.getElementById('backToMenuModalBtn')
+
+		// Get all cells
+		this.cells = document.querySelectorAll('.cell')
+	}
+
+	setupEventListeners() {
+		// Name screen
+		this.searchBtn.addEventListener('click', () => this.searchForPlayer())
+		this.playerNameInput.addEventListener('keypress', e => {
+			if (e.key === 'Enter') this.searchForPlayer()
+		})
+
+		// Game board
+		this.cells.forEach(cell => {
+			cell.addEventListener('click', e => this.makeMove(e))
+		})
+
+		// Restart button
+		this.restartBtn.addEventListener('click', () => this.restartGame())
+
+		// Modal buttons
+		this.playAgainBtn.addEventListener('click', () => this.playAgain())
+		this.backToMenuBtn.addEventListener('click', () => this.backToMenu())
+		this.backToMenuModalBtn.addEventListener('click', () => this.backToMenu())
+	}
+
+	setupSocketListeners() {
+		this.socket.on('waiting', () => {
+			this.showScreen('waitingScreen')
+		})
+
+		this.socket.on('gameFound', data => {
+			this.gameId = data.gameId
+			this.playerIndex = data.playerIndex
+			this.opponentName = data.opponent
+			this.playerSymbol = data.symbol
+			this.gameState = data.gameState
+
+			this.updateGameInfo()
+			this.showScreen('gameScreen')
+		})
+
+		this.socket.on('gameUpdate', gameState => {
+			this.gameState = gameState
+			this.updateBoard()
+			this.updateTurnStatus()
+
+			if (gameState.gameStatus === 'finished') {
+				this.handleGameEnd()
+			}
+		})
+
+		this.socket.on('opponentDisconnected', () => {
+			this.showScreen('disconnectScreen')
+			this.hideModal()
+		})
+
+		this.socket.on('invalidMove', message => {
+			this.showMessage(message, 'error')
+		})
+
+		this.socket.on('error', message => {
+			this.showMessage(message, 'error')
+		})
+	}
+
+	searchForPlayer() {
+		const name = this.playerNameInput.value.trim()
+		if (!name) {
+			this.showMessage('Iltimos, ismingizni kiriting', 'error')
+			return
+		}
+
+		this.playerName = name
+		this.socket.emit('searchPlayer', name)
+	}
+
+	makeMove(event) {
+		const cell = event.target
+		const position = parseInt(cell.dataset.index)
+
+		if (
+			!this.gameState ||
+			this.gameState.gameStatus !== 'playing' ||
+			this.gameState.currentPlayer !== this.playerIndex ||
+			this.gameState.board[position] !== null
+		) {
+			return
+		}
+
+		this.socket.emit('makeMove', {
+			gameId: this.gameId,
+			position: position,
+		})
+	}
+
+	restartGame() {
+		this.socket.emit('restartGame', this.gameId)
+		this.restartBtn.style.display = 'none'
+	}
+
+	playAgain() {
+		this.restartGame()
+		this.hideModal()
+	}
+
+	backToMenu() {
+		this.resetGame()
+		this.showScreen('nameScreen')
+		this.hideModal()
+	}
+
+	updateGameInfo() {
+		this.currentPlayerEl.textContent = `You : ${this.playerName}`
+		this.opponentEl.textContent = `Opponent : ${this.opponentName}`
+		this.playerSymbolEl.textContent = `You are playing as ${this.playerSymbol}`
+	}
+
+	updateBoard() {
+		this.cells.forEach((cell, index) => {
+			const cellValue = this.gameState.board[index]
+			cell.textContent = cellValue || ''
+
+			// Remove old classes
+			cell.classList.remove('x', 'o', 'disabled')
+
+			// Add appropriate class
+			if (cellValue === 'X') {
+				cell.classList.add('x')
+			} else if (cellValue === 'O') {
+				cell.classList.add('o')
+			}
+
+			// Disable cells if game is finished or not player's turn
+			if (
+				this.gameState.gameStatus !== 'playing' ||
+				this.gameState.currentPlayer !== this.playerIndex ||
+				cellValue !== null
+			) {
+				cell.classList.add('disabled')
+			}
+		})
+	}
+
+	updateTurnStatus() {
+		if (!this.gameState) return
+
+		const currentSymbol = this.gameState.currentPlayer === 0 ? 'X' : 'O'
+		const isMyTurn = this.gameState.currentPlayer === this.playerIndex
+
+		if (this.gameState.gameStatus === 'playing') {
+			if (isMyTurn) {
+				this.turnStatusEl.textContent = 'Sizning navbatingiz'
+				this.turnStatusEl.style.color = '#4CAF50'
+			} else {
+				this.turnStatusEl.textContent = `${currentSymbol}'s Turn`
+				this.turnStatusEl.style.color = '#2196F3'
+			}
+		}
+	}
+
+	handleGameEnd() {
+		let message = ''
+		let messageClass = ''
+
+		if (this.gameState.winner === 'draw') {
+			message = 'Durrang!'
+			messageClass = 'draw'
+		} else if (this.gameState.winner === this.playerIndex) {
+			message = 'Siz yutdingiz! 🎉'
+			messageClass = 'win'
+		} else {
+			message = 'Siz yutqazdingiz 😔'
+			messageClass = 'lose'
+		}
+
+		this.turnStatusEl.textContent = "O'yin tugadi"
+		this.turnStatusEl.style.color = '#666'
+
+		// Show restart button
+		this.restartBtn.style.display = 'inline-block'
+
+		// Show modal after a short delay
+		setTimeout(() => {
+			this.showGameOverModal(message, messageClass)
+		}, 1000)
+	}
+
+	showGameOverModal(message, messageClass) {
+		this.gameResultEl.textContent = message
+		this.gameResultEl.className = messageClass
+		this.gameOverModal.classList.add('active')
+	}
+
+	hideModal() {
+		this.gameOverModal.classList.remove('active')
+	}
+
+	showScreen(screenId) {
+		// Hide all screens
+		document.querySelectorAll('.screen').forEach(screen => {
+			screen.classList.remove('active')
+		})
+
+		// Show target screen
+		document.getElementById(screenId).classList.add('active')
+	}
+
+	showMessage(message, type = 'info') {
+		// Simple message display (you can enhance this with a toast system)
+		console.log(`${type.toUpperCase()}: ${message}`)
+
+		// You can implement a toast notification system here
+		const alertClass = type === 'error' ? 'alert-error' : 'alert-info'
+
+		// Create temporary message element
+		const messageEl = document.createElement('div')
+		messageEl.className = `message ${alertClass}`
+		messageEl.textContent = message
+		messageEl.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'error' ? '#f44336' : '#2196F3'};
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            z-index: 2000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        `
+
+		document.body.appendChild(messageEl)
+
+		// Remove after 3 seconds
+		setTimeout(() => {
+			if (messageEl.parentNode) {
+				messageEl.parentNode.removeChild(messageEl)
+			}
+		}, 3000)
+	}
+
+	resetGame() {
+		this.gameId = null
+		this.playerIndex = null
+		this.playerName = ''
+		this.opponentName = ''
+		this.playerSymbol = ''
+		this.gameState = null
+
+		// Reset input
+		this.playerNameInput.value = ''
+
+		// Reset board
+		this.cells.forEach(cell => {
+			cell.textContent = ''
+			cell.classList.remove('x', 'o', 'disabled')
+		})
+
+		// Reset UI elements
+		this.restartBtn.style.display = 'none'
+		this.turnStatusEl.textContent = ''
+		this.currentPlayerEl.textContent = 'You : '
+		this.opponentEl.textContent = 'Opponent : '
+		this.playerSymbolEl.textContent = 'You are playing as X'
+
+		this.hideModal()
+	}
+}
+
+// Initialize game when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+	new TicTacToeGame()
+})
+
+// Handle page refresh/close
+window.addEventListener('beforeunload', () => {
+	// Socket.io will handle the disconnect automatically
+})
